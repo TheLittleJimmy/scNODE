@@ -101,7 +101,8 @@ pred_cell_tps = np.concatenate(
 reorder_pred_data = forward_recon_traj
 true_umap_traj, umap_model, pca_model = umapWithPCA(np.concatenate(true_data, axis=0), n_neighbors=50, min_dist=0.1, pca_pcs=50)
 pred_umap_traj = umap_model.transform(pca_model.transform(np.concatenate(reorder_pred_data, axis=0)))
-save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results/MIOFlow"
+os.makedirs(save_dir, exist_ok=True)
 plotPredAllTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps,
                 save_path=f"{save_dir}/{data_name}-{split_type}-MIOFlow-UMAP-all-time.png")
 plotPredTestTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps, test_tps,
@@ -120,7 +121,7 @@ for t in test_tps_list:
 
 # ======================================================
 # Save results
-save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+# Note: save_dir already updated above for MIOFlow subdirectory
 res_filename = "{}/{}-{}-MIOFlow-res.npy".format(save_dir, data_name, split_type)
 state_filename = "{}/{}-{}-MIOFlow-state_dict.pt".format(save_dir, data_name, split_type)
 print("Saving to {}".format(res_filename))

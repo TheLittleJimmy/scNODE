@@ -120,7 +120,8 @@ for t in test_tps_list:
 
 # ======================================================
 # Save results
-save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results/scNODE"
+os.makedirs(save_dir, exist_ok=True)
 res_filename = "{}/{}-{}-scNODE-res.npy".format(save_dir, data_name, split_type)
 state_filename = "{}/{}-{}-scNODE-state_dict.pt".format(save_dir, data_name, split_type)
 print("Saving to {}".format(res_filename))

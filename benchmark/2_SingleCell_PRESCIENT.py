@@ -100,7 +100,8 @@ reorder_pred_data = all_recon_obs
 true_umap_traj, umap_model, pca_model = umapWithPCA(np.concatenate(true_data, axis=0), n_neighbors=50, min_dist=0.1, pca_pcs=50)
 pred_umap_traj = umap_model.transform(pca_model.transform(np.concatenate(reorder_pred_data, axis=0)))
 
-save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results/PRESCIENT"
+os.makedirs(save_dir, exist_ok=True)
 plotPredAllTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps,
                 save_path=f"{save_dir}/{data_name}-{split_type}-PRESCIENT-UMAP-all-time.png")
 plotPredTestTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps, test_tps,
@@ -118,8 +119,8 @@ for t in test_tps_list:
 
 # ======================================================
 # Save results
-save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
-res_filename="{}/{}-{}-PRESCIENT-res.npy".format(save_dir, data_name, split_type)
+# Note: save_dir already updated above for PRESCIENT subdirectory
+res_filename = "{}/{}-{}-PRESCIENT-res.npy".format(save_dir, data_name, split_type)
 print("Saving to {}".format(res_filename))
 # Save all cell categories
 traj_data = [ann_data.X[(ann_data.obs["tp"].values - 1.0) == t] for t in range(len(all_tps))]
@@ -137,7 +138,7 @@ res_dict["true_pca"] = [pca.transform(scaler.transform(each)) for each in res_di
 np.save(res_filename, res_dict, allow_pickle=True)
 
 # save model and config
-model_dir="{}/{}-{}-PRESCIENT-state_dict.pt".format(save_dir, data_name, split_type)
-config_dir="{}/{}-{}-PRESCIENT-config.pt".format(save_dir, data_name, split_type)
+model_dir = "{}/{}-{}-PRESCIENT-state_dict.pt".format(save_dir, data_name, split_type)
+config_dir = "{}/{}-{}-PRESCIENT-config.pt".format(save_dir, data_name, split_type)
 torch.save(best_state_dict['model_state_dict'], model_dir)
 torch.save(config.__dict__, config_dir)
