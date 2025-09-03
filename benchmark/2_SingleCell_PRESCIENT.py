@@ -9,7 +9,8 @@ import numpy as np
 from datetime import datetime
 import torch
 import sys
-sys.path.append("../")
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append("../baseline/")
 sys.path.append("../baseline/prescient_model/")
 sys.path.append("../baseline/prescient_model/prescient")
@@ -112,22 +113,22 @@ for t in test_tps_list:
     pred_global_metric = globalEvaluation(traj_data[t], reorder_pred_data[t])
     print(pred_global_metric)
 
-# # ======================================================
-# # Save results
-# save_dir = "../res/single_cell/experimental/{}".format(data_name)
-# res_filename="{}/{}-{}-PRESCIENT-res.npy".format(save_dir, data_name, split_type)
-# print("Saving to {}".format(res_filename))
-# res_dict = {
-#     "true": [ann_data.X[(ann_data.obs["tp"].values - 1.0) == t] for t in range(len(all_tps))],
-#     "pred": sim_tp_recon,
-#     "latent_seq": sim_tp_latent,
-#     "tps": {"all": all_tps, "train": train_tps, "test": test_tps},
-#     }
-# res_dict["true_pca"] = [pca.transform(scaler.transform(each)) for each in res_dict["true"]]
-# np.save(res_filename, res_dict, allow_pickle=True)
-#
-# # save model and config
-# model_dir="{}/{}-{}-PRESCIENT-state_dict.pt".format(save_dir, data_name, split_type)
-# config_dir="/{}/{}-{}-PRESCIENT-config.pt".format(save_dir, data_name, split_type)
-# torch.save(best_state_dict['model_state_dict'], model_dir)
-# torch.save(config.__dict__, config_dir)
+# ======================================================
+# Save results
+save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+res_filename="{}/{}-{}-PRESCIENT-res.npy".format(save_dir, data_name, split_type)
+print("Saving to {}".format(res_filename))
+res_dict = {
+    "true": [ann_data.X[(ann_data.obs["tp"].values - 1.0) == t] for t in range(len(all_tps))],
+    "pred": sim_tp_recon,
+    "latent_seq": sim_tp_latent,
+    "tps": {"all": all_tps, "train": train_tps, "test": test_tps},
+    }
+res_dict["true_pca"] = [pca.transform(scaler.transform(each)) for each in res_dict["true"]]
+np.save(res_filename, res_dict, allow_pickle=True)
+
+# save model and config
+model_dir="{}/{}-{}-PRESCIENT-state_dict.pt".format(save_dir, data_name, split_type)
+config_dir="{}/{}-{}-PRESCIENT-config.pt".format(save_dir, data_name, split_type)
+torch.save(best_state_dict['model_state_dict'], model_dir)
+torch.save(config.__dict__, config_dir)

@@ -70,9 +70,12 @@ def loadWOTData(data_dir, split_type):
 
 # --------------------------------
 # Dataset directories
-zebrafish_data_dir = "../data/single_cell/experimental/zebrafish_embryonic/new_processed"
-wot_data_dir = "../data/single_cell/experimental/Schiebinger2019/reduced_processed/"
-drosophila_data_dir = "../data/single_cell/experimental/drosophila_embryonic/processed/"
+zebrafish_data_dir = ("/project/Stat/s1155202253/myproject/data/scNODE/data/"
+                      "single_cell/scNODE data/zebrafish_embryonic/new_processed")
+wot_data_dir = ("/project/Stat/s1155202253/myproject/data/scNODE/data/"
+                "single_cell/scNODE data/Schiebinger2019/reduced_processed/")
+drosophila_data_dir = ("/project/Stat/s1155202253/myproject/data/scNODE/data/"
+                       "single_cell/scNODE data/drosophila_embryonic/processed/")
 
 
 def loadSCData(data_name, split_type, data_dir=None):
@@ -81,14 +84,14 @@ def loadSCData(data_name, split_type, data_dir=None):
     '''
     print("[ Data={} | Split={} ] Loading data...".format(data_name, split_type))
     if data_name == "zebrafish":
-        if data_dir == "None":
+        if data_dir is None:
             data_dir = zebrafish_data_dir
         ann_data = loadZebrafishData(data_dir, split_type)
         ann_data.X = ann_data.X.astype(float)
         processed_data = preprocess(ann_data.copy())
         cell_types =  processed_data.obs["ZF6S-Cluster"].apply(lambda x: "NAN" if pd.isna(x) else x).values
     elif data_name == "drosophila":
-        if data_dir == "None":
+        if data_dir is None:
             data_dir = drosophila_data_dir
         ann_data = loadDrosophilaData(data_dir, split_type)
         print("Pre-processing...")
@@ -96,7 +99,7 @@ def loadSCData(data_name, split_type, data_dir=None):
         processed_data = preprocess(ann_data.copy())
         cell_types = processed_data.obs.seurat_clusters.values
     elif data_name == "wot":
-        if data_dir == "None":
+        if data_dir is None:
             data_dir = wot_data_dir
         ann_data = loadWOTData(data_dir, split_type)
         processed_data = ann_data.copy()

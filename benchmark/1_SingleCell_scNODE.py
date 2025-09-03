@@ -8,6 +8,9 @@ Author:
 import matplotlib.pyplot as plt
 import torch
 import numpy as np
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from benchmark.BenchmarkUtils import loadSCData, tpSplitInd, tunedOurPars, splitBySpec
 from plotting.__init__ import *
@@ -112,22 +115,22 @@ for t in test_tps_list:
     pred_global_metric = globalEvaluation(traj_data[t].detach().numpy(), all_recon_obs[:, t, :])
     print(pred_global_metric)
 
-# # ======================================================
-# # Save results
-# save_dir = "../res/single_cell/experimental/{}".format(data_name)
-# res_filename = "{}/{}-{}-scNODE-res.npy".format(save_dir, data_name, split_type)
-# state_filename = "{}/{}-{}-scNODE-state_dict.pt".format(save_dir, data_name, split_type)
-# print("Saving to {}".format(res_filename))
-# np.save(
-#     res_filename,
-#     {"true": [each.detach().numpy() for each in traj_data],
-#      "pred": [all_recon_obs[:, t, :] for t in range(all_recon_obs.shape[1])],
-#      "first_latent_dist": first_latent_dist,
-#      "latent_seq": latent_seq,
-#      "tps": {"all": tps.detach().numpy(), "train": train_tps.detach().numpy(), "test": test_tps.detach().numpy()},
-#      "loss": loss_list,
-#      },
-#     allow_pickle=True
-# )
-# torch.save(latent_ode_model.state_dict(), state_filename)
+# ======================================================
+# Save results
+save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+res_filename = "{}/{}-{}-scNODE-res.npy".format(save_dir, data_name, split_type)
+state_filename = "{}/{}-{}-scNODE-state_dict.pt".format(save_dir, data_name, split_type)
+print("Saving to {}".format(res_filename))
+np.save(
+    res_filename,
+    {"true": [each.detach().numpy() for each in traj_data],
+     "pred": [all_recon_obs[:, t, :] for t in range(all_recon_obs.shape[1])],
+     "first_latent_dist": first_latent_dist,
+     "latent_seq": latent_seq,
+     "tps": {"all": tps.detach().numpy(), "train": train_tps.detach().numpy(), "test": test_tps.detach().numpy()},
+     "loss": loss_list,
+     },
+    allow_pickle=True
+)
+torch.save(latent_ode_model.state_dict(), state_filename)
 

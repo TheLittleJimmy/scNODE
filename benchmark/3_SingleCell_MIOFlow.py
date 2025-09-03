@@ -8,6 +8,8 @@ import pandas as pd
 import scanpy
 import torch
 import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 sys.path.append("MIOFlow_model_revised")
 
@@ -100,22 +102,22 @@ for t in test_tps_list:
     print(pred_global_metric)
 
 
-# # ======================================================
-# # Save results
-# save_dir = "../res/single_cell/experimental/{}".format(data_name)
-# res_filename = "{}/{}-{}-MIOFlow-res.npy".format(save_dir, data_name, split_type)
-# state_filename = "{}/{}-{}-MIOFlow-state_dict.pt".format(save_dir, data_name, split_type)
-# print("Saving to {}".format(res_filename))
-# np.save(
-#     res_filename,
-#     {"true": true_data,
-#      "pred": forward_recon_traj,
-#      "tps": {"all": tps, "train": train_tps, "test": test_tps},
-#      "gae_losses": gae_losses,
-#      "local_losses": local_losses,
-#      "batch_losses": batch_losses,
-#      "globe_losses": globe_losses,
-#      },
-#     allow_pickle=True
-# )
-# torch.save(model.state_dict(), state_filename)
+# ======================================================
+# Save results
+save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+res_filename = "{}/{}-{}-MIOFlow-res.npy".format(save_dir, data_name, split_type)
+state_filename = "{}/{}-{}-MIOFlow-state_dict.pt".format(save_dir, data_name, split_type)
+print("Saving to {}".format(res_filename))
+np.save(
+    res_filename,
+    {"true": true_data,
+     "pred": forward_recon_traj,
+     "tps": {"all": tps, "train": train_tps, "test": test_tps},
+     "gae_losses": gae_losses,
+     "local_losses": local_losses,
+     "batch_losses": batch_losses,
+     "globe_losses": globe_losses,
+     },
+    allow_pickle=True
+)
+torch.save(model.state_dict(), state_filename)
