@@ -102,8 +102,11 @@ pred_cell_tps = np.concatenate([np.repeat(t, all_recon_obs[:, t, :].shape[0]) fo
 reorder_pred_data = [all_recon_obs[:, t, :] for t in range(all_recon_obs.shape[1])]
 true_umap_traj, umap_model, pca_model = umapWithPCA(np.concatenate(true_data, axis=0), n_neighbors=50, min_dist=0.1, pca_pcs=50)
 pred_umap_traj = umap_model.transform(pca_model.transform(np.concatenate(reorder_pred_data, axis=0)))
-plotPredAllTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps)
-plotPredTestTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps, test_tps.detach().numpy())
+save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+plotPredAllTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps, 
+                save_path=f"{save_dir}/{data_name}-{split_type}-scNODE-UMAP-all-time.png")
+plotPredTestTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps, test_tps.detach().numpy(),
+                 save_path=f"{save_dir}/{data_name}-{split_type}-scNODE-UMAP-test-time.png")
 
 # Compute evaluation metrics
 print("Compute metrics...")
@@ -121,16 +124,16 @@ save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_resu
 res_filename = "{}/{}-{}-scNODE-res.npy".format(save_dir, data_name, split_type)
 state_filename = "{}/{}-{}-scNODE-state_dict.pt".format(save_dir, data_name, split_type)
 print("Saving to {}".format(res_filename))
-np.save(
-    res_filename,
-    {"true": [each.detach().numpy() for each in traj_data],
-     "pred": [all_recon_obs[:, t, :] for t in range(all_recon_obs.shape[1])],
-     "first_latent_dist": first_latent_dist,
-     "latent_seq": latent_seq,
-     "tps": {"all": tps.detach().numpy(), "train": train_tps.detach().numpy(), "test": test_tps.detach().numpy()},
-     "loss": loss_list,
-     },
-    allow_pickle=True
-)
+# Save all cell categories
+res_dict = {
+    "true": [each.detach().numpy() for each in traj_data],  # all time points cells
+    "train": [traj_data[t].detach().numpy() for t in train_tps.int().tolist()],  # training cells
+    "test": [traj_data[t].detach().numpy() for t in test_tps.int().tolist()],   # testing cells
+    "pred": [all_recon_obs[:, t, :] for t in range(all_recon_obs.shape[1])],  # predicted cells
+    "first_latent_dist": first_latent_dist,
+    "latent_seq": latent_seq,
+    "tps": {"all": tps.detach().numpy(), "train": train_tps.detach().numpy(), "test": test_tps.detach().numpy()},
+    "loss": loss_list,
+}
+np.save(res_filename, res_dict, allow_pickle=True)
 torch.save(latent_ode_model.state_dict(), state_filename)
-

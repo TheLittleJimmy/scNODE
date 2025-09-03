@@ -241,7 +241,7 @@ def train(
 
 
 
-from benchmark.utils import sampleOT
+from benchmark.BenchmarkUtils import sampleOT
 import time as time_timer
 def _makeSimulation(df, model, tps, opts, n_sim_cells, n_trajectories=100, n_bins=100):
     use_cuda = opts["use_cuda"]

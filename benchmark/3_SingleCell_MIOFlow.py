@@ -2,7 +2,21 @@
 Description:
     Run MIOFlow on single-cell data.
 '''
+import matplotlib
+matplotlib.use('Agg')  # Use non-GUI backend
 import matplotlib.pyplot as plt
+import warnings
+
+# Suppress font warnings
+warnings.filterwarnings('ignore', message='findfont: Generic family.*')
+warnings.filterwarnings('ignore', category=UserWarning, module='matplotlib')
+
+# Configure matplotlib fonts
+plt.rcParams.update({
+    'font.family': ['DejaVu Sans', 'Arial', 'sans-serif'],
+    'font.sans-serif': ['DejaVu Sans', 'Arial', 'Helvetica', 'sans-serif'],
+})
+
 import numpy as np
 import pandas as pd
 import scanpy
@@ -10,8 +24,7 @@ import torch
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-sys.path.append("MIOFlow_model_revised")
+sys.path.append("../baseline/MIOFlow_model_revised")
 
 from baseline.MIOFlow_model_revised.running import trainModel, makeSimulation
 from benchmark.BenchmarkUtils import loadSCData, tpSplitInd, tunedMIOFlowPars
@@ -67,7 +80,7 @@ print("=" * 70)
 print("Model Training...")
 gae_embedded_dim, encoder_layers, layers, lambda_density = tunedMIOFlowPars(data_name, split_type)
 model, gae_losses, local_losses, batch_losses, globe_losses, opts = trainModel(
-    train_df, train_tps, test_tps, n_genes=n_genes, n_epochs_emb=1000, samples_size_emb=(50,),
+    train_df, train_tps, test_tps, n_genes=n_genes, n_epochs_emb=100, samples_size_emb=(50,),
     gae_embedded_dim=gae_embedded_dim, encoder_layers=encoder_layers,
     layers=layers, lambda_density=lambda_density,
     batch_size=100, n_local_epochs=40, n_global_epochs=40, n_post_local_epochs=0
@@ -88,8 +101,11 @@ pred_cell_tps = np.concatenate(
 reorder_pred_data = forward_recon_traj
 true_umap_traj, umap_model, pca_model = umapWithPCA(np.concatenate(true_data, axis=0), n_neighbors=50, min_dist=0.1, pca_pcs=50)
 pred_umap_traj = umap_model.transform(pca_model.transform(np.concatenate(reorder_pred_data, axis=0)))
-plotPredAllTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps)
-plotPredTestTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps, test_tps.detach().numpy())
+save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+plotPredAllTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps,
+                save_path=f"{save_dir}/{data_name}-{split_type}-MIOFlow-UMAP-all-time.png")
+plotPredTestTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps, test_tps,
+                 save_path=f"{save_dir}/{data_name}-{split_type}-MIOFlow-UMAP-test-time.png")
 
 # Compute metric for testing time points
 print("Compute metrics...")
@@ -108,16 +124,17 @@ save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_resu
 res_filename = "{}/{}-{}-MIOFlow-res.npy".format(save_dir, data_name, split_type)
 state_filename = "{}/{}-{}-MIOFlow-state_dict.pt".format(save_dir, data_name, split_type)
 print("Saving to {}".format(res_filename))
-np.save(
-    res_filename,
-    {"true": true_data,
-     "pred": forward_recon_traj,
-     "tps": {"all": tps, "train": train_tps, "test": test_tps},
-     "gae_losses": gae_losses,
-     "local_losses": local_losses,
-     "batch_losses": batch_losses,
-     "globe_losses": globe_losses,
-     },
-    allow_pickle=True
-)
+# Save all cell categories
+res_dict = {
+    "true": true_data,  # all time points cells
+    "train": train_data,  # training cells
+    "test": test_data,    # testing cells
+    "pred": forward_recon_traj,  # predicted cells
+    "tps": {"all": tps, "train": train_tps, "test": test_tps},
+    "gae_losses": gae_losses,
+    "local_losses": local_losses,
+    "batch_losses": batch_losses,
+    "globe_losses": globe_losses,
+}
+np.save(res_filename, res_dict, allow_pickle=True)
 torch.save(model.state_dict(), state_filename)

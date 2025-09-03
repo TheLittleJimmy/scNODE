@@ -100,8 +100,11 @@ reorder_pred_data = all_recon_obs
 true_umap_traj, umap_model, pca_model = umapWithPCA(np.concatenate(true_data, axis=0), n_neighbors=50, min_dist=0.1, pca_pcs=50)
 pred_umap_traj = umap_model.transform(pca_model.transform(np.concatenate(reorder_pred_data, axis=0)))
 
-plotPredAllTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps)
-plotPredTestTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps, test_tps)
+save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
+plotPredAllTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps,
+                save_path=f"{save_dir}/{data_name}-{split_type}-PRESCIENT-UMAP-all-time.png")
+plotPredTestTime(true_umap_traj, pred_umap_traj, true_cell_tps, pred_cell_tps, test_tps,
+                 save_path=f"{save_dir}/{data_name}-{split_type}-PRESCIENT-UMAP-test-time.png")
 
 # Compute evaluation metrics
 print("Compute metrics...")
@@ -118,12 +121,18 @@ for t in test_tps_list:
 save_dir = "/project/Stat/s1155202253/myproject/babydev/benchmark_zebrafish_results/original_benchmark_results"
 res_filename="{}/{}-{}-PRESCIENT-res.npy".format(save_dir, data_name, split_type)
 print("Saving to {}".format(res_filename))
+# Save all cell categories
+traj_data = [ann_data.X[(ann_data.obs["tp"].values - 1.0) == t] for t in range(len(all_tps))]
+train_data = [traj_data[t] for t in train_tps]
+test_data = [traj_data[t] for t in test_tps]
 res_dict = {
-    "true": [ann_data.X[(ann_data.obs["tp"].values - 1.0) == t] for t in range(len(all_tps))],
-    "pred": sim_tp_recon,
+    "true": traj_data,  # all time points cells
+    "train": train_data,  # training cells
+    "test": test_data,    # testing cells
+    "pred": sim_tp_recon,  # predicted cells
     "latent_seq": sim_tp_latent,
-    "tps": {"all": all_tps, "train": train_tps, "test": test_tps},
-    }
+    "tps": {"all": all_tps, "train": train_tps, "test": test_tps}
+}
 res_dict["true_pca"] = [pca.transform(scaler.transform(each)) for each in res_dict["true"]]
 np.save(res_filename, res_dict, allow_pickle=True)
 
