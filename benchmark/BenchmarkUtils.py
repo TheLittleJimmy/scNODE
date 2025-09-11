@@ -115,45 +115,46 @@ def loadSCData(data_name, split_type, data_dir=None):
 def tpSplitInd(data_name, split_type):
     '''
     Get the training/testing timepoint split for each dataset.
+    Returns 1-based indices to match actual time point values.
     '''
     if data_name == "zebrafish":
         if split_type == "two_forecasting": # medium
-            train_tps = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-            test_tps = [10, 11]
+            train_tps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+            test_tps = [11, 12]
         elif split_type == "three_interpolation": # easy
-            train_tps = [0, 1, 2, 3, 5, 7, 9, 10, 11]
-            test_tps = [4, 6, 8]
+            train_tps = [1, 2, 3, 4, 6, 8, 10, 11, 12]
+            test_tps = [5, 7, 9]
         elif split_type == "remove_recovery": # hard
-            train_tps = [0, 1, 3, 5, 7, 9]
-            test_tps = [2, 4, 6, 8, 10, 11]
+            train_tps = [1, 2, 4, 6, 8, 10]
+            test_tps = [3, 5, 7, 9, 11, 12]
         else:
             raise ValueError("Unknown split type {}!".format(split_type))
     elif data_name == "drosophila":
         if split_type == "three_forecasting": # medium
-            train_tps = [0, 1, 2, 3, 4, 5, 6, 7]
-            test_tps = [8, 9, 10]
+            train_tps = [1, 2, 3, 4, 5, 6, 7, 8]
+            test_tps = [9, 10, 11]
         elif split_type == "three_interpolation": # easy
-            train_tps = [0, 1, 2, 3, 5, 7, 9, 10]
-            test_tps = [4, 6, 8]
+            train_tps = [1, 2, 3, 4, 6, 8, 10, 11]
+            test_tps = [5, 7, 9]
         elif split_type == "remove_recovery": # hard
-            train_tps = [0, 1, 3, 5, 7]
-            test_tps = [2, 4, 6, 8, 9, 10]
+            train_tps = [1, 2, 4, 6, 8]
+            test_tps = [3, 5, 7, 9, 10, 11]
         else:
             raise ValueError("Unknown split type {}!".format(split_type))
     elif data_name == "wot":
-        unique_days = np.arange(19)
+        unique_days = np.arange(1, 20)  # 1-based indexing: 1-19
         if split_type == "three_forecasting": # medium
             train_tps = unique_days[:16].tolist()
             test_tps = unique_days[16:].tolist()
         elif split_type == "three_interpolation": # easy
             train_tps = unique_days.tolist()
-            test_tps = [train_tps[5], train_tps[10], train_tps[15]]
-            train_tps.remove(unique_days[5])
-            train_tps.remove(unique_days[10])
-            train_tps.remove(unique_days[15])
+            test_tps = [train_tps[4], train_tps[9], train_tps[14]]  # Adjust for 1-based
+            train_tps.remove(unique_days[4])
+            train_tps.remove(unique_days[9])
+            train_tps.remove(unique_days[14])
         elif split_type == "remove_recovery": # hard
             train_tps = unique_days.tolist()
-            test_idx = [5, 7, 9, 11, 15, 16, 17, 18]
+            test_idx = [4, 6, 8, 10, 14, 15, 16, 17]  # Adjust for 1-based
             test_tps = [train_tps[t] for t in test_idx]
             for t in test_idx:
                 train_tps.remove(unique_days[t])
@@ -167,9 +168,11 @@ def tpSplitInd(data_name, split_type):
 def splitBySpec(traj_data, train_tps, test_tps):
     '''
     Split timepoints into training and testing sets.
+    traj_data is 0-based indexed, but train_tps/test_tps are now 1-based.
     '''
-    train_data = [traj_data[t] for t in train_tps]
-    test_data = [traj_data[t] for t in test_tps]
+    # Convert 1-based indices to 0-based for array access
+    train_data = [traj_data[t-1] for t in train_tps]
+    test_data = [traj_data[t-1] for t in test_tps]
     return train_data, test_data
 
 # --------------------------------

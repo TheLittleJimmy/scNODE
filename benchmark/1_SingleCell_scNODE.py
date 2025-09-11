@@ -44,7 +44,7 @@ def main(split_type):
     if cell_types is not None:
         traj_cell_types = [cell_types[np.where(cell_tps == t)[0]] for t in range(1, n_tps + 1)]
 
-    all_tps = list(range(n_tps))
+    all_tps = list(range(1, n_tps + 1))  # 1-based time points: 1,2,3,...,12
     train_data, test_data = splitBySpec(traj_data, train_tps, test_tps)
     tps = torch.FloatTensor(all_tps)
     train_tps = torch.FloatTensor(train_tps)
@@ -98,8 +98,9 @@ def main(split_type):
     # Visualization - 2D UMAP embeddings
     print("Compare true and reconstructed data...")
     true_data = [each.detach().numpy() for each in traj_data]
-    true_cell_tps = np.concatenate([np.repeat(t, each.shape[0]) for t, each in enumerate(true_data)])
-    pred_cell_tps = np.concatenate([np.repeat(t, all_recon_obs[:, t, :].shape[0]) for t in range(all_recon_obs.shape[1])])
+    # Use 1-based time point labels for visualization
+    true_cell_tps = np.concatenate([np.repeat(t+1, each.shape[0]) for t, each in enumerate(true_data)])
+    pred_cell_tps = np.concatenate([np.repeat(t+1, all_recon_obs[:, t, :].shape[0]) for t in range(all_recon_obs.shape[1])])
     reorder_pred_data = [all_recon_obs[:, t, :] for t in range(all_recon_obs.shape[1])]
     true_umap_traj, umap_model, pca_model = umapWithPCA(np.concatenate(true_data, axis=0), n_neighbors=50, min_dist=0.1, pca_pcs=50)
     pred_umap_traj = umap_model.transform(pca_model.transform(np.concatenate(reorder_pred_data, axis=0)))
@@ -115,9 +116,11 @@ def main(split_type):
     test_tps_list = [int(t) for t in test_tps]
     for t in test_tps_list:
         print("-" * 70)
-        print("t = {}".format(t))
+        print("t = {}".format(t))  # t is now 1-based time point value
         # -----
-        pred_global_metric = globalEvaluation(traj_data[t].detach().numpy(), all_recon_obs[:, t, :])
+        # Convert to 0-based index for array access
+        array_idx = t - 1
+        pred_global_metric = globalEvaluation(traj_data[array_idx].detach().numpy(), all_recon_obs[:, array_idx, :])
         print(pred_global_metric)
 
     # ======================================================
@@ -129,8 +132,8 @@ def main(split_type):
     # Save all cell categories
     res_dict = {
         "true": [each.detach().numpy() for each in traj_data],  # all time points cells
-        "train": [traj_data[t].detach().numpy() for t in train_tps.int().tolist()],  # training cells
-        "test": [traj_data[t].detach().numpy() for t in test_tps.int().tolist()],   # testing cells
+        "train": [traj_data[t-1].detach().numpy() for t in train_tps.int().tolist()],  # training cells (convert to 0-based)
+        "test": [traj_data[t-1].detach().numpy() for t in test_tps.int().tolist()],   # testing cells (convert to 0-based)
         "pred": [all_recon_obs[:, t, :] for t in range(all_recon_obs.shape[1])],  # predicted cells
         "first_latent_dist": first_latent_dist,
         "latent_seq": latent_seq,

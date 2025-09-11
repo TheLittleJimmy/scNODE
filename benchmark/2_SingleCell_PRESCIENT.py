@@ -43,11 +43,12 @@ def main(split_type):
     ann_data, cell_tps, cell_types, n_genes, n_tps = loadSCData(data_name, split_type)
     train_tps, test_tps = tpSplitInd(data_name, split_type)
     data = ann_data.X
-    all_tps = list(np.arange(n_tps))
+    all_tps = list(range(1, n_tps + 1))  # 1-based time points: 1,2,3,...,12
 
     processed_data = ann_data[
-        [t for t in range(ann_data.shape[0]) if (ann_data.obs["tp"].values[t] - 1.0) in train_tps]
+        [t for t in range(ann_data.shape[0]) if ann_data.obs["tp"].values[t] in train_tps]
     ]
+    # Convert 1-based tp values to 0-based for PRESCIENT compatibility
     cell_tps = (processed_data.obs["tp"].values - 1.0).astype(int)
     cell_types = np.repeat("NAN", processed_data.shape[0])
     genes = processed_data.var.index.values
@@ -55,22 +56,24 @@ def main(split_type):
     # Use tuned hyperparameters
     k_dim, layers, sd, tau, clip = tunedPRESCIENTPars(data_name, split_type)
 
-    # PCA and construct data dict
+    # PCA and construct data dict (PRESCIENT expects 0-based indices)
     data_dict, scaler, pca, um = prepare_data(
         processed_data.X, cell_tps, cell_types, genes,
         num_pcs=k_dim, num_neighbors_umap=10
     )
-    data_dict["y"] = list(range(train_tps[-1] + 1))
-    data_dict["x"] = [data_dict["x"][train_tps.index(t)] if t in train_tps else [] for t in data_dict["y"]]
-    data_dict["xp"] = [data_dict["xp"][train_tps.index(t)] if t in train_tps else [] for t in data_dict["y"]]
-    data_dict["w"] = [data_dict["w"][train_tps.index(t)] if t in train_tps else [] for t in data_dict["y"]]
+    # Convert train_tps to 0-based for PRESCIENT
+    train_tps_0based = [t-1 for t in train_tps]
+    data_dict["y"] = list(range(train_tps_0based[-1] + 1))
+    data_dict["x"] = [data_dict["x"][train_tps_0based.index(t)] if t in train_tps_0based else [] for t in data_dict["y"]]
+    data_dict["xp"] = [data_dict["xp"][train_tps_0based.index(t)] if t in train_tps_0based else [] for t in data_dict["y"]]
+    data_dict["w"] = [data_dict["w"][train_tps_0based.index(t)] if t in train_tps_0based else [] for t in data_dict["y"]]
 
     # ======================================================
     # Model training
     train_epochs = 2000
     train_lr = 1e-3
     final_model, best_state_dict, config, loss_list = prescientTrain(
-        data_dict, data_name=data_name, out_dir="", train_t=train_tps[1:], timestamp=timestamp,
+        data_dict, data_name=data_name, out_dir="", train_t=train_tps_0based[1:], timestamp=timestamp,
         k_dim=k_dim, layers=layers, train_epochs=train_epochs, train_lr=train_lr,
         train_sd=sd, train_tau=tau, train_clip=clip
     )
@@ -90,12 +93,13 @@ def main(split_type):
 
     # ======================================================
     # Visualization - 2D UMAP embeddings
-    traj_data = [ann_data.X[(ann_data.obs["tp"].values - 1.0) == t] for t in range(len(all_tps))]
+    traj_data = [ann_data.X[ann_data.obs["tp"].values == t] for t in all_tps]  # Use 1-based tp values
     all_recon_obs = sim_tp_recon
     print("Compare true and reconstructed data...")
     true_data = traj_data
-    true_cell_tps = np.concatenate([np.repeat(t, each.shape[0]) for t, each in enumerate(true_data)])
-    pred_cell_tps = np.concatenate([np.repeat(t, all_recon_obs[t].shape[0]) for t in range(len(all_recon_obs))])
+    # Use 1-based time point labels for visualization
+    true_cell_tps = np.concatenate([np.repeat(t+1, each.shape[0]) for t, each in enumerate(true_data)])
+    pred_cell_tps = np.concatenate([np.repeat(t+1, all_recon_obs[t].shape[0]) for t in range(len(all_recon_obs))])
     reorder_pred_data = all_recon_obs
 
     true_umap_traj, umap_model, pca_model = umapWithPCA(np.concatenate(true_data, axis=0), n_neighbors=50, min_dist=0.1, pca_pcs=50)
@@ -113,9 +117,11 @@ def main(split_type):
     test_tps_list = [int(t) for t in test_tps]
     for t in test_tps_list:
         print("-" * 70)
-        print("t = {}".format(t))
+        print("t = {}".format(t))  # t is now 1-based time point value
         # -----
-        pred_global_metric = globalEvaluation(traj_data[t], reorder_pred_data[t])
+        # Convert to 0-based index for array access
+        array_idx = t - 1
+        pred_global_metric = globalEvaluation(traj_data[array_idx], reorder_pred_data[array_idx])
         print(pred_global_metric)
 
     # ======================================================
@@ -124,9 +130,9 @@ def main(split_type):
     res_filename = "{}/{}-{}-PRESCIENT-res.npy".format(save_dir, data_name, split_type)
     print("Saving to {}".format(res_filename))
     # Save all cell categories
-    traj_data = [ann_data.X[(ann_data.obs["tp"].values - 1.0) == t] for t in range(len(all_tps))]
-    train_data = [traj_data[t] for t in train_tps]
-    test_data = [traj_data[t] for t in test_tps]
+    traj_data = [ann_data.X[ann_data.obs["tp"].values == t] for t in all_tps]  # Use 1-based tp values
+    train_data = [traj_data[t-1] for t in train_tps]  # Convert to 0-based for array access
+    test_data = [traj_data[t-1] for t in test_tps]    # Convert to 0-based for array access
     res_dict = {
         "true": traj_data,  # all time points cells
         "train": train_data,  # training cells

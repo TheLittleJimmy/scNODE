@@ -58,8 +58,9 @@ def main(split_type):
     data = ann_data.X
     true_data = [data[np.where(cell_tps == t)[0], :] for t in range(1, n_tps + 1)]  # (# tps, # cells, # genes)
     true_cell_tps = np.concatenate([np.repeat(t, each.shape[0]) for t, each in enumerate(true_data)])
-    train_data = [true_data[t] for t in train_tps]
-    test_data = [true_data[t] for t in test_tps]
+    # Convert 1-based indices to 0-based for array access
+    train_data = [true_data[t-1] for t in train_tps]
+    test_data = [true_data[t-1] for t in test_tps]
     print("All shape: ", [each.shape[0] for each in true_data])
     print("Train shape: ", [each.shape[0] for each in train_data])
     print("Test shape: ", [each.shape[0] for each in test_data])
@@ -68,8 +69,10 @@ def main(split_type):
     n_pcs = 50
     pca_model = PCA(n_components=n_pcs, svd_solver="arpack")
     data_pca = pca_model.fit_transform(np.concatenate(train_data, axis=0))
+    # Convert 1-based train_tps to 0-based for MIOFlow compatibility
+    train_tps_0based = [t-1 for t in train_tps]
     time_df = pd.DataFrame(
-        data=np.concatenate([np.repeat(train_tps[t], x.shape[0]) for t, x in enumerate(train_data)])[:, np.newaxis],
+        data=np.concatenate([np.repeat(train_tps_0based[t], x.shape[0]) for t, x in enumerate(train_data)])[:, np.newaxis],
         columns=["samples"]
     )
     data_df = pd.DataFrame(data=data_pca)
@@ -80,8 +83,10 @@ def main(split_type):
     print("=" * 70)
     print("Model Training...")
     gae_embedded_dim, encoder_layers, layers, lambda_density = tunedMIOFlowPars(data_name, split_type)
+    # Convert test_tps to 0-based for MIOFlow compatibility 
+    test_tps_0based = [t-1 for t in test_tps]
     model, gae_losses, local_losses, batch_losses, globe_losses, opts = trainModel(
-        train_df, train_tps, test_tps, n_genes=n_genes, n_epochs_emb=100, samples_size_emb=(50,),
+        train_df, train_tps_0based, test_tps_0based, n_genes=n_genes, n_epochs_emb=100, samples_size_emb=(50,),
         gae_embedded_dim=gae_embedded_dim, encoder_layers=encoder_layers,
         layers=layers, lambda_density=lambda_density,
         batch_size=100, n_local_epochs=40, n_global_epochs=40, n_post_local_epochs=0
@@ -89,15 +94,17 @@ def main(split_type):
     # Model prediction
     print("=" * 70)
     print("Model Predicting...")
-    tps = list(range(n_tps))
-    generated = makeSimulation(train_df, model, tps, opts, n_sim_cells=2000, n_trajectories=100, n_bins=100)
+    # MIOFlow expects 0-based indices for simulation
+    tps_0based = list(range(n_tps))
+    generated = makeSimulation(train_df, model, tps_0based, opts, n_sim_cells=2000, n_trajectories=100, n_bins=100)
     forward_recon_traj = [pca_model.inverse_transform(generated[i, :, :]) for i in range(generated.shape[0])]
     # ======================================================
     # Visualization - 2D UMAP embeddings
     print("Compare true and reconstructed data...")
-    true_cell_tps = np.concatenate([np.repeat(t, each.shape[0]) for t, each in enumerate(true_data)])
+    # Use 1-based time point labels for visualization
+    true_cell_tps = np.concatenate([np.repeat(t+1, each.shape[0]) for t, each in enumerate(true_data)])
     pred_cell_tps = np.concatenate(
-        [np.repeat(t, forward_recon_traj[t].shape[0]) for t in range(len(forward_recon_traj))]
+        [np.repeat(t+1, forward_recon_traj[t].shape[0]) for t in range(len(forward_recon_traj))]
     )
     reorder_pred_data = forward_recon_traj
     true_umap_traj, umap_model, pca_model = umapWithPCA(np.concatenate(true_data, axis=0), n_neighbors=50, min_dist=0.1, pca_pcs=50)
@@ -114,9 +121,11 @@ def main(split_type):
     test_tps_list = [int(t) for t in test_tps]
     for t in test_tps_list:
         print("-" * 70)
-        print("t = {}".format(t))
+        print("t = {}".format(t))  # t is now 1-based time point value
         # -----
-        pred_global_metric = globalEvaluation(true_data[t], reorder_pred_data[t])
+        # Convert to 0-based index for array access
+        array_idx = t - 1
+        pred_global_metric = globalEvaluation(true_data[array_idx], reorder_pred_data[array_idx])
         print(pred_global_metric)
 
 
@@ -127,12 +136,14 @@ def main(split_type):
     state_filename = "{}/{}-{}-MIOFlow-state_dict.pt".format(save_dir, data_name, split_type)
     print("Saving to {}".format(res_filename))
     # Save all cell categories
+    # Create 1-based tps list for saving
+    tps_1based = list(range(1, n_tps + 1))
     res_dict = {
         "true": true_data,  # all time points cells
         "train": train_data,  # training cells
         "test": test_data,    # testing cells
         "pred": forward_recon_traj,  # predicted cells
-        "tps": {"all": tps, "train": train_tps, "test": test_tps},
+        "tps": {"all": tps_1based, "train": train_tps, "test": test_tps},
         "gae_losses": gae_losses,
         "local_losses": local_losses,
         "batch_losses": batch_losses,
