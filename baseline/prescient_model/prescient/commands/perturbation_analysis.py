@@ -1,8 +1,7 @@
 import argparse
-import prescient.simulate as traj
-from prescient.train.model import *
-import prescient.perturb as pert
-import prescient.simulate as traj
+from .. import simulate as traj
+from ..train.model import *
+from .. import perturb as pert
 
 
 def create_parser():

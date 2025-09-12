@@ -18,7 +18,7 @@ from .util import *
 # record computational time costs
 import time
 from benchmark.BenchmarkUtils import sampleOT
-import prescient_model.prescient.simulate as traj
+from .. import simulate as traj
 
 
 

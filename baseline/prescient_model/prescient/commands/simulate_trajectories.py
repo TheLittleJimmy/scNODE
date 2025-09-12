@@ -1,7 +1,7 @@
 import argparse
 import torch
-import prescient.simulate as traj
-from prescient.train.model import *
+from .. import simulate as traj
+from ..train.model import *
 
 def create_parser():
     parser = argparse.ArgumentParser()

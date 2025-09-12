@@ -13,7 +13,7 @@ from collections import OrderedDict
 from types import SimpleNamespace
 from time import strftime, localtime
 
-import prescient.train as train
+from .. import train
 
 
 def create_parser():
