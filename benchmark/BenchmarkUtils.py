@@ -120,7 +120,7 @@ def tpSplitInd(data_name, split_type):
     if data_name == "zebrafish":
         if split_type == "two_forecasting": # medium
             train_tps = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-            test_tps = [11, 12]
+            test_tps = [11, 12, 13, 14, 15]
         elif split_type == "three_interpolation": # easy
             train_tps = [1, 2, 3, 4, 6, 8, 10, 11, 12]
             test_tps = [5, 7, 9]
