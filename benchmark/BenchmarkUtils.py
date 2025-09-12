@@ -81,6 +81,7 @@ drosophila_data_dir = ("/project/Stat/s1155202253/myproject/data/scNODE/data/"
 def loadSCData(data_name, split_type, data_dir=None):
     '''
     Main function to load scRNA-seq dataset and pre-process it.
+    Returns processed_data, cell_tps, cell_types, n_genes, n_tps, unique_tps
     '''
     print("[ Data={} | Split={} ] Loading data...".format(data_name, split_type))
     if data_name == "zebrafish":
@@ -107,9 +108,10 @@ def loadSCData(data_name, split_type, data_dir=None):
     else:
         raise ValueError("Unknown data name.")
     cell_tps = ann_data.obs["tp"]
-    n_tps = len(np.unique(cell_tps))
+    unique_tps = sorted([tp for tp in np.unique(cell_tps) if not np.isnan(tp)])
+    n_tps = len(unique_tps)
     n_genes = ann_data.shape[1]
-    return processed_data, cell_tps, cell_types, n_genes, n_tps
+    return processed_data, cell_tps, cell_types, n_genes, n_tps, unique_tps
 
 
 def tpSplitInd(data_name, split_type):
@@ -165,15 +167,41 @@ def tpSplitInd(data_name, split_type):
     return train_tps, test_tps
 
 
-def splitBySpec(traj_data, train_tps, test_tps):
+def splitBySpec(traj_data, train_tps, test_tps, unique_tps=None):
     '''
     Split timepoints into training and testing sets.
-    traj_data is 0-based indexed, but train_tps/test_tps are now 1-based.
+    Args:
+        traj_data: list of data arrays indexed by position in unique_tps
+        train_tps: 1-based time point values for training
+        test_tps: 1-based time point values for testing  
+        unique_tps: sorted list of actual time point values (optional, defaults to 1-based consecutive)
     '''
-    # Convert 1-based indices to 0-based for array access
-    train_data = [traj_data[t-1] for t in train_tps]
-    test_data = [traj_data[t-1] for t in test_tps]
+    if unique_tps is None:
+        # Fallback to old behavior: assume 1-based consecutive time points
+        unique_tps = list(range(1, len(traj_data) + 1))
+    
+    # Convert time point values to array indices
+    train_indices = [unique_tps.index(t) for t in train_tps if t in unique_tps]
+    test_indices = [unique_tps.index(t) for t in test_tps if t in unique_tps]
+    
+    train_data = [traj_data[i] for i in train_indices]
+    test_data = [traj_data[i] for i in test_indices]
     return train_data, test_data
+
+
+def getTimePointIndex(time_point, unique_tps):
+    '''
+    Convert a time point value to its array index in trajectory data.
+    Args:
+        time_point: the actual time point value
+        unique_tps: sorted list of actual time point values
+    Returns:
+        array index (0-based) for accessing trajectory data
+    '''
+    try:
+        return unique_tps.index(time_point)
+    except ValueError:
+        raise ValueError(f"Time point {time_point} not found in unique time points {unique_tps}")
 
 # --------------------------------
 
