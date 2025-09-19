@@ -271,7 +271,7 @@ def calculate_nn(
         raise NotImplementedError(f'method={method} not implemented')
 
 # %% ../nbs/10_eval.ipynb 5
-from MIOFlow.utils import (
+from .utils import (
     to_np, get_groups_from_df, get_cell_types_from_df, 
     get_sample_n_from_df, get_times_from_groups
 )

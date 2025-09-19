@@ -5,18 +5,18 @@ Description:
 Reference:
     [1] https://github.com/KrishnaswamyLab/MIOFlow/tree/main
 '''
-from MIOFlow.utils import generate_steps, set_seeds, config_criterion
-from MIOFlow.models import make_model, Autoencoder
-from MIOFlow.plots import plot_comparision, plot_losses
-from MIOFlow.train import train_ae, training_regimen, training_regimen_with_timer
-from MIOFlow.constants import ROOT_DIR, DATA_DIR, NTBK_DIR, IMGS_DIR, RES_DIR
-from MIOFlow.datasets import (
+from .MIOFlow.utils import generate_steps, set_seeds, config_criterion
+from .MIOFlow.models import make_model, Autoencoder
+from .MIOFlow.plots import plot_comparision, plot_losses
+from .MIOFlow.train import train_ae, training_regimen, training_regimen_with_timer
+from .MIOFlow.constants import ROOT_DIR, DATA_DIR, NTBK_DIR, IMGS_DIR, RES_DIR
+from .MIOFlow.datasets import (
     make_diamonds, make_swiss_roll, make_tree, make_eb_data,
     make_dyngen_data
 )
-from MIOFlow.geo import setup_distance
-from MIOFlow.exp import setup_exp
-from MIOFlow.eval import generate_plot_data
+from .MIOFlow.geo import setup_distance
+from .MIOFlow.exp import setup_exp
+from .MIOFlow.eval import generate_plot_data
 
 import os, pandas as pd, numpy as np, \
     seaborn as sns, matplotlib as mpl, matplotlib.pyplot as plt, \

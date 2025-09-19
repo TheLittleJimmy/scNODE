@@ -1,0 +1,7 @@
+{
+    "git.enabled": true,
+    "git.path": "git",
+    "git.autoRepositoryDetection": true,
+    "python.defaultInterpreterPath": "/stat_Lin_Group/s1155202253/miniconda3/envs/env_2502",
+    "python.analysis.typeCheckingMode": "off"
+}

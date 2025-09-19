@@ -20,9 +20,9 @@ from types import SimpleNamespace
 import os
 import copy
 import argparse
-import baseline.prescient_model.prescient.train as train
-import baseline.prescient_model.prescient.simulate as traj
-from baseline.prescient_model.prescient.train.model import *
+from .prescient import train
+from .prescient import simulate as traj
+from .prescient.train.model import *
 
 
 # --------------------------------------------------
@@ -246,7 +246,7 @@ def create_simulate_parser():
 def prescientTrain(data_dict, data_name, out_dir, k_dim, layers, train_epochs, train_lr, train_sd, train_tau, train_clip, train_t, timestamp):
     print("PRESCIENT model training...")
     train_parser = create_train_parser()
-    args = train_parser.parse_args()
+    args = train_parser.parse_args([])
     args.data_path = data_name
     args.out_dir = out_dir
     args.k_dim = k_dim
@@ -265,7 +265,7 @@ def prescientTrain(data_dict, data_name, out_dir, k_dim, layers, train_epochs, t
 
 def prescientSimulate(data_dict, data_name, best_model_state, num_cells, num_steps, config):
     sim_parser = create_simulate_parser()
-    args = sim_parser.parse_args()
+    args = sim_parser.parse_args([])
     args.data_pt = data_dict
     args.data_path = data_name
     args.best_model_state = best_model_state
@@ -281,7 +281,7 @@ def prescientTrainWithTimer(
         train_t, timestamp, num_cells, num_steps, test_tps):
     print("PRESCIENT model training...")
     train_parser = create_train_parser()
-    args = train_parser.parse_args()
+    args = train_parser.parse_args([])
     args.data_path = data_name
     args.out_dir = out_dir
     args.k_dim = k_dim
